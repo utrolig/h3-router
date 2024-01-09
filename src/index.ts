@@ -1,3 +1,4 @@
+import { addPost, posts } from "./posts";
 import { InferPaths, RootRoute, Route, WebApplication } from "./router";
 import z from "zod";
 
@@ -7,17 +8,16 @@ const postsRoute = new Route({
   path: "/posts",
   get: {
     handler: ({ event }) => {
-      return "lol from handler";
+      return posts;
     },
   },
   post: {
     body: z.object({
-      name: z.string(),
+      title: z.string(),
     }),
     handler: ({ body }) => {
-      return {
-        name: `lol ${body.name}`,
-      };
+      const post = addPost(body.title);
+      return post;
     },
   },
   getParentRoute() {
@@ -33,7 +33,9 @@ const postDetailsRoute = new Route({
   },
   get: {
     handler: ({ event }) => {
-      return `hello from posts/${event.context.params?.id}`;
+      const postId = event.context.params?.id;
+      const post = posts.find((post) => post.id === Number(postId));
+      return post;
     },
   },
 });
