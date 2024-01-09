@@ -1,23 +1,23 @@
-import { addPost, posts } from "./posts";
+import { addUser, users } from "./usersDatabase";
 import { InferPaths, RootRoute, Route, WebApplication } from "./router";
 import z from "zod";
 
 const rootRoute = new RootRoute({ path: "/api" });
 
-const postsRoute = new Route({
-  path: "/posts",
+const usersRoute = new Route({
+  path: "/users",
   get: {
     handler: ({ event }) => {
-      return posts;
+      return users;
     },
   },
   post: {
     body: z.object({
-      title: z.string(),
+      name: z.string(),
     }),
     handler: ({ body }) => {
-      const post = addPost(body.title);
-      return post;
+      const user = addUser(body.name);
+      return user;
     },
   },
   getParentRoute() {
@@ -25,23 +25,23 @@ const postsRoute = new Route({
   },
 });
 
-const postDetailsRoute = new Route({
+const userDetailsRoute = new Route({
   path: "/:id",
   getParentRoute() {
     // I have no idea why this is giving a typescript error
-    return postsRoute;
+    return usersRoute;
   },
   get: {
     handler: ({ event }) => {
-      const postId = event.context.params?.id;
-      const post = posts.find((post) => post.id === Number(postId));
-      return post;
+      const userId = event.context.params?.id;
+      const user = users.find((user) => user.id === Number(userId));
+      return user;
     },
   },
 });
 
 const routeTree = rootRoute.addChildren([
-  postsRoute.addChildren([postDetailsRoute]),
+  usersRoute.addChildren([userDetailsRoute]),
 ]);
 
 const webApp = new WebApplication(routeTree);
