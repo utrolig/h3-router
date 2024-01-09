@@ -1,0 +1,19 @@
+{
+  "name": "h3-testing",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "listhen -w src",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "h3": "^1.10.0",
+    "listhen": "^1.5.5",
+    "zod": "^3.22.4"
+  }
+}

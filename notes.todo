@@ -1,0 +1,10 @@
+Goals:
+  ☐ Infer a type from the routeTree that can be used with a proxy so that we can get a fully typed "client" for frontend apps
+  ☐ Typed queryParams with zod validation
+  ☐ Typed routeParams with zod validation
+  ☐ Typed input (JSON / FormData) with zod validation
+    ✔ JSON types and validation @done(24-01-09 16:17)
+
+  ☐ Adding context to WebApplication that is available from inside all route handlers (database, config etc)
+  ☐ Pluggable parsers (FormData / JSON)
+  ☐ OpenAPI spec Generation
