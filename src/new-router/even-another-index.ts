@@ -20,7 +20,10 @@ type RouteOptions<
 > = {
   method: TMethod;
   path: TPath;
-  handler: (params: { queryParams: TQueryParams }) => TReturnType;
+  handler: (params: {
+    queryParams?: TQueryParams;
+    body?: TBody;
+  }) => TReturnType;
   queryParams?: TQueryParams;
   body?: TBody;
 };

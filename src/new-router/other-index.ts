@@ -1,4 +1,3 @@
-import { H3Event } from "h3";
 import { ZodTypeAny, z } from "zod";
 
 export type HttpMethod =
@@ -12,50 +11,101 @@ export type HttpMethod =
   | "OPTIONS"
   | "TRACE";
 
+type OptionalValidation = ZodTypeAny | undefined;
+
+type EndpointWithoutBodyConfig<
+  THandlerReturn extends unknown,
+  TQueryParams extends OptionalValidation
+> = {
+  handler: (opts: {
+    queryParams: TQueryParams extends ZodTypeAny
+      ? z.infer<TQueryParams>
+      : undefined;
+  }) => THandlerReturn;
+  queryParams?: TQueryParams;
+};
+
+type EndpointWithBodyConfig<
+  THandlerReturn extends unknown,
+  TQueryParams extends OptionalValidation,
+  TBody extends OptionalValidation
+> = {
+  handler: (opts: {
+    queryParams: TQueryParams extends ZodTypeAny
+      ? z.infer<TQueryParams>
+      : undefined;
+    body: TBody extends ZodTypeAny ? z.infer<TBody> : undefined;
+  }) => THandlerReturn;
+  queryParams?: TQueryParams;
+  body?: TBody;
+};
+
+type EndpointMethods<
+  TGetHandlerReturn extends unknown,
+  TGetQueryParams extends OptionalValidation,
+  TPostHandlerReturn extends unknown,
+  TPostQueryParams extends OptionalValidation,
+  TPostBody extends OptionalValidation
+> = {
+  get?: EndpointWithoutBodyConfig<TGetHandlerReturn, TGetQueryParams>;
+  post?: EndpointWithBodyConfig<
+    TPostHandlerReturn,
+    TPostQueryParams,
+    TPostBody
+  >;
+};
+
 type EndpointConfig<
   TPath extends string,
-  TMethod extends HttpMethod,
   TParentRoute extends any,
-  THandlerReturn extends unknown,
-  TQueryParams extends ZodTypeAny,
-  TBody extends object
+  TGetHandlerReturn extends unknown,
+  TGetQueryParams extends ZodTypeAny,
+  TPostHandlerReturn extends unknown,
+  TPostQueryParams extends ZodTypeAny,
+  TPostBody extends ZodTypeAny
 > = {
   getParentRoute: () => TParentRoute;
-  queryParams?: TQueryParams;
-  method: TMethod;
-  handler: (ctx: { event: H3Event }) => THandlerReturn;
   path: TPath;
-} & (TMethod extends "GET" | "HEAD" ? {} : { body?: TBody });
+} & EndpointMethods<
+  TGetHandlerReturn,
+  TGetQueryParams,
+  TPostHandlerReturn,
+  TPostQueryParams,
+  TPostBody
+>;
 
 type AnyEndpoint = Endpoint<any, any, any, any, any, any>;
 
 class Endpoint<
   TPath extends string = string,
-  TMethod extends HttpMethod = HttpMethod,
   TParentRoute extends any = any,
-  THandlerReturn extends unknown = unknown,
   TChildren extends unknown = unknown,
-  TQueryParams extends ZodTypeAny = ZodTypeAny,
-  TBody extends object = object
+  TGetHandlerReturn extends unknown = unknown,
+  TGetQueryParams extends ZodTypeAny = ZodTypeAny,
+  TPostHandlerReturn extends unknown = unknown,
+  TPostQueryParams extends ZodTypeAny = ZodTypeAny,
+  TPostBody extends ZodTypeAny = ZodTypeAny
 > {
   options: EndpointConfig<
     TPath,
-    TMethod,
     TParentRoute,
-    THandlerReturn,
-    TQueryParams,
-    TBody
+    TGetHandlerReturn,
+    TGetQueryParams,
+    TPostHandlerReturn,
+    TPostQueryParams,
+    TPostBody
   >;
   children?: TChildren;
 
   constructor(
     options: EndpointConfig<
       TPath,
-      TMethod,
       TParentRoute,
-      THandlerReturn,
-      TQueryParams,
-      TBody
+      TGetHandlerReturn,
+      TGetQueryParams,
+      TPostHandlerReturn,
+      TPostQueryParams,
+      TPostBody
     >
   ) {
     this.options = options;
@@ -65,12 +115,13 @@ class Endpoint<
     children: TNewChildren
   ): Endpoint<
     TPath,
-    TMethod,
     TParentRoute,
-    THandlerReturn,
     TNewChildren,
-    TQueryParams,
-    TBody
+    TGetHandlerReturn,
+    TGetQueryParams,
+    TPostHandlerReturn,
+    TPostQueryParams,
+    TPostBody
   > {
     this.children = children as any;
     return this as any;
@@ -87,8 +138,8 @@ export class RootEndpoint<TBasePrefix extends string = "/"> extends Endpoint<
 > {
   constructor(
     options?: Omit<
-      EndpointConfig<TBasePrefix, any, any, any, any, any>,
-      "getParentRoute" | "get" | "method" | "queryParams" | "handler"
+      EndpointConfig<TBasePrefix, any, any, any, any, any, any>,
+      "getParentRoute" | "get" | "post"
     >
   ) {
     super(options as any);
@@ -99,81 +150,12 @@ const rootEndpoint = new RootEndpoint({ path: "/api" });
 
 const getUsers = new Endpoint({
   getParentRoute: () => rootEndpoint,
-  method: "POST",
   path: "/users/cake/post",
-  queryParams: z.object({
-    name: z.string(),
-  }),
-  handler: async () => "kek" as const,
+  post: {
+    handler: ({ body, queryParams }) => "kek" as const,
+    body: z.object({ name: z.string() }),
+    queryParams: z.object({ asdf: z.string() }),
+  },
 });
 
 const routeTree = rootEndpoint.addChildren([getUsers]);
-
-type ExtractPath<T> = T extends Endpoint<infer TPath, any, any, any, any, any>
-  ? TPath extends `/${infer Rest}`
-    ? Rest
-    : TPath
-  : never;
-
-type InferPaths<T> = `/${ConcatenatePaths<T>}`;
-type InferMethod<T> = T extends Endpoint<any, infer TMethod, any, any, any, any>
-  ? TMethod
-  : never;
-type ConcatenatePaths<T> = T extends Endpoint<
-  any,
-  any,
-  any,
-  any,
-  infer TChildren,
-  any,
-  any
->
-  ? TChildren extends Endpoint<any, any, any, any, any, any>[]
-    ?
-        | `${ExtractPath<T>}`
-        | `${ExtractPath<T>}/${ConcatenatePaths<TChildren[number]>}`
-    : ExtractPath<T>
-  : never;
-
-type InferRoutePath<T> = T extends Endpoint<
-  any,
-  any,
-  infer TParentRoute,
-  any,
-  any,
-  any
->
-  ? TParentRoute extends Endpoint<any, any, any, any, any, any, any>
-    ? `/${ExtractPath<TParentRoute>}/${ExtractPath<T>}`
-    : ExtractPath<T>
-  : never;
-
-type InferRouteReturn<T> = T extends Endpoint<any, any, any, infer TRouteReturn>
-  ? TRouteReturn
-  : never;
-
-type InferQueryParams<T> = T extends Endpoint<
-  any,
-  any,
-  any,
-  any,
-  any,
-  infer TQueryParams
->
-  ? z.infer<TQueryParams>
-  : never;
-
-type InferEndpointTypes<T> = {
-  path: InferRoutePath<T>;
-  method: InferMethod<T>;
-  return: InferRouteReturn<T>;
-  queryParams: InferQueryParams<T>;
-};
-
-type AllPaths = InferPaths<typeof routeTree>;
-type UsersPath = InferRoutePath<typeof getUsers>;
-type UsersMethod = InferMethod<typeof getUsers>;
-type UsersReturn = InferRouteReturn<typeof getUsers>;
-type UsersQueryParams = InferQueryParams<typeof getUsers>;
-
-type UsersEndpointTypes = InferEndpointTypes<typeof getUsers>;
