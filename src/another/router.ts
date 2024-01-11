@@ -10,6 +10,8 @@ type PathParams<T extends string> = string extends T
 
 type RouteParams<T extends string> = T extends `${infer _Start}:${infer Param}`
   ? { routeParams: PathParams<T> }
+  : T extends string
+  ? {}
   : never;
 
 type HttpMethod =
@@ -115,16 +117,17 @@ export class EndpointGroup<TBasePrefix extends string = "/"> extends Endpoint<
 const root = new EndpointGroup({ path: "/api" });
 
 const rootGet = new Endpoint({
-  path: "/users",
-  method: "get",
-  getParentEndpoint: () => root,
-  handler: () => "hello",
-});
-
-const userDetails = new Endpoint({
   path: "/users/:id",
   method: "get",
   getParentEndpoint: () => root,
-  handler: ({ routeParams, query }) => "hello",
+  handler: ({ body }) => "hello",
+  body: z.object({ asdf: z.string() }),
+});
+
+const userDetails = new Endpoint({
+  path: "/users",
+  method: "get",
+  getParentEndpoint: () => root,
+  handler: ({ query }) => {},
   query: z.object({ asdf: z.string() }),
 });
