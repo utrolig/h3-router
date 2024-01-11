@@ -174,7 +174,7 @@ type InferPostHandler<T> = T extends Endpoint<
       returns: TPostHandlerReturn;
       queryParams: TPostQueryParams extends ZodTypeAny
         ? z.infer<TPostQueryParams>
-        : never;
+        : undefined;
       body: TPostBody extends ZodTypeAny ? z.infer<TPostBody> : undefined;
     }
   : undefined;
