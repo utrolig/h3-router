@@ -3,6 +3,7 @@ import { Endpoint, RootEndpoint } from "./router";
 import {
   InferGetHandlerReturn,
   InferGetQueryParams,
+  InferPath,
   InferPostBody,
   InferPostHandlerReturn,
   InferPostQueryParams,
@@ -10,7 +11,7 @@ import {
 
 const rootEndpoint = new RootEndpoint({ path: "/api" });
 
-const getUsers = new Endpoint({
+const usersEndpoint = new Endpoint({
   getParentRoute: () => rootEndpoint,
   path: "/users",
   get: {
@@ -31,11 +32,11 @@ const getUsers = new Endpoint({
   },
 });
 
-const routeTree = rootEndpoint.addChildren([getUsers]);
+const routeTree = rootEndpoint.addChildren([usersEndpoint]);
 
-type UsersGetReturn = InferGetHandlerReturn<typeof getUsers>;
-type UsersGetQuery = InferGetQueryParams<typeof getUsers>;
+type UsersGetReturn = InferGetHandlerReturn<typeof usersEndpoint>;
+type UsersGetQuery = InferGetQueryParams<typeof usersEndpoint>;
 
-type UsersPostReturn = InferPostHandlerReturn<typeof getUsers>;
-type UsersPostQuery = InferPostQueryParams<typeof getUsers>;
-type UsersPostBody = InferPostBody<typeof getUsers>;
+type UsersPostReturn = InferPostHandlerReturn<typeof usersEndpoint>;
+type UsersPostQuery = InferPostQueryParams<typeof usersEndpoint>;
+type UsersPostBody = InferPostBody<typeof usersEndpoint>;

@@ -73,3 +73,22 @@ export type InferPostBody<T> = T extends Endpoint<
     ? z.infer<TPostBody>
     : never
   : never;
+
+export type RemoveLeadingSlash<T extends string> = T extends `/${infer TRest}`
+  ? RemoveLeadingSlash<TRest>
+  : T;
+
+export type RemoveTrailinSlash<T extends string> = T extends `${infer TRest}/`
+  ? RemoveTrailinSlash<TRest>
+  : T;
+
+export type InferPath<T> = T extends Endpoint<
+  infer TPath,
+  any,
+  any,
+  any,
+  any,
+  any
+>
+  ? RemoveLeadingSlash<RemoveTrailinSlash<TPath>>
+  : never;
