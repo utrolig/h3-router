@@ -8,10 +8,7 @@ type PathParams<T extends string> = string extends T
   ? { [K in Param]: string }
   : never;
 
-type RouteParams<T extends string> = PathParams<T> extends Record<
-  string,
-  string
->
+type RouteParams<T extends string> = T extends `${infer _Start}:${infer Param}`
   ? { routeParams: PathParams<T> }
   : never;
 
@@ -118,7 +115,7 @@ export class EndpointGroup<TBasePrefix extends string = "/"> extends Endpoint<
 const root = new EndpointGroup({ path: "/api" });
 
 const rootGet = new Endpoint({
-  path: "/",
+  path: "/users",
   method: "get",
   getParentEndpoint: () => root,
   handler: () => "hello",
