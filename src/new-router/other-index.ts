@@ -59,10 +59,10 @@ type EndpointConfig<
   TPath extends string,
   TParentRoute extends any,
   TGetHandlerReturn extends unknown,
-  TGetQueryParams extends ZodTypeAny,
+  TGetQueryParams extends OptionalValidation,
   TPostHandlerReturn extends unknown,
-  TPostQueryParams extends ZodTypeAny,
-  TPostBody extends ZodTypeAny
+  TPostQueryParams extends OptionalValidation,
+  TPostBody extends OptionalValidation
 > = {
   getParentRoute: () => TParentRoute;
   path: TPath;
@@ -74,17 +74,17 @@ type EndpointConfig<
   TPostBody
 >;
 
-type AnyEndpoint = Endpoint<any, any, any, any, any, any>;
+type AnyEndpoint = Endpoint<any, any, any, any, any, any, any, any>;
 
 class Endpoint<
   TPath extends string = string,
   TParentRoute extends any = any,
   TChildren extends unknown = unknown,
   TGetHandlerReturn extends unknown = unknown,
-  TGetQueryParams extends ZodTypeAny = ZodTypeAny,
+  TGetQueryParams extends OptionalValidation = undefined,
   TPostHandlerReturn extends unknown = unknown,
-  TPostQueryParams extends ZodTypeAny = ZodTypeAny,
-  TPostBody extends ZodTypeAny = ZodTypeAny
+  TPostQueryParams extends OptionalValidation = undefined,
+  TPostBody extends OptionalValidation = undefined
 > {
   options: EndpointConfig<
     TPath,
@@ -154,8 +154,29 @@ const getUsers = new Endpoint({
   post: {
     handler: ({ body, queryParams }) => "kek" as const,
     body: z.object({ name: z.string() }),
-    queryParams: z.object({ asdf: z.string() }),
+    // queryParams: z.object({ asdf: z.string() }),
   },
 });
 
 const routeTree = rootEndpoint.addChildren([getUsers]);
+
+type InferPostHandler<T> = T extends Endpoint<
+  any,
+  any,
+  any,
+  any,
+  any,
+  infer TPostHandlerReturn,
+  infer TPostQueryParams,
+  infer TPostBody
+>
+  ? {
+      returns: TPostHandlerReturn;
+      queryParams: TPostQueryParams extends ZodTypeAny
+        ? z.infer<TPostQueryParams>
+        : never;
+      body: TPostBody extends ZodTypeAny ? z.infer<TPostBody> : undefined;
+    }
+  : undefined;
+
+type getUsers = InferPostHandler<typeof getUsers>;
