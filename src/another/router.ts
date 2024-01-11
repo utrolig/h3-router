@@ -30,6 +30,16 @@ type OptionalValidation = ZodTypeAny | undefined;
 
 type AnyEndpoint = Endpoint<any, any, any, any, any, any, any>;
 
+type BaseEndpointOptions<
+  TPath extends string,
+  TMethod extends HttpMethod,
+  TParentEndpoint extends AnyEndpoint
+> = {
+  path: TPath;
+  method: TMethod;
+  getParentEndpoint: () => TParentEndpoint;
+};
+
 export class Endpoint<
   TPath extends string = string,
   TMethod extends HttpMethod = HttpMethod,
@@ -41,58 +51,50 @@ export class Endpoint<
 > {
   children?: TChildren;
 
-  constructor(config: {
-    path: TPath;
-    method: TMethod;
-    getParentEndpoint: () => TParentEndpoint;
+  constructor(
+    config: BaseEndpointOptions<TPath, TMethod, TParentEndpoint> & {
+      handler: (options: RouteParams<TPath>) => THandlerReturn;
+      query?: undefined;
+      body?: undefined;
+    }
+  );
 
-    handler: (options: RouteParams<TPath>) => THandlerReturn;
-    query?: undefined;
-    body?: undefined;
-  });
+  constructor(
+    config: BaseEndpointOptions<TPath, TMethod, TParentEndpoint> & {
+      handler: (
+        options: RouteParams<TPath> & {
+          query: TQuery extends ZodTypeAny ? z.infer<TQuery> : undefined;
+        }
+      ) => THandlerReturn;
+      query: TQuery;
+      body?: undefined;
+    }
+  );
 
-  constructor(config: {
-    path: TPath;
-    method: TMethod;
-    getParentEndpoint: () => TParentEndpoint;
+  constructor(
+    config: BaseEndpointOptions<TPath, TMethod, TParentEndpoint> & {
+      handler: (
+        options: RouteParams<TPath> & {
+          body: TBody extends ZodTypeAny ? z.infer<TBody> : undefined;
+        }
+      ) => THandlerReturn;
+      query?: undefined;
+      body: TBody;
+    }
+  );
 
-    handler: (
-      options: RouteParams<TPath> & {
-        query: TQuery extends ZodTypeAny ? z.infer<TQuery> : undefined;
-      }
-    ) => THandlerReturn;
-    query: TQuery;
-    body?: undefined;
-  });
-
-  constructor(config: {
-    path: TPath;
-    method: TMethod;
-    getParentEndpoint: () => TParentEndpoint;
-
-    handler: (
-      options: RouteParams<TPath> & {
-        body: TBody extends ZodTypeAny ? z.infer<TBody> : undefined;
-      }
-    ) => THandlerReturn;
-    query?: undefined;
-    body: TBody;
-  });
-
-  constructor(config: {
-    path: TPath;
-    method: TMethod;
-    getParentEndpoint: () => TParentEndpoint;
-
-    handler: (
-      options: RouteParams<TPath> & {
-        query: TQuery extends ZodTypeAny ? z.infer<TQuery> : undefined;
-        body: TBody extends ZodTypeAny ? z.infer<TBody> : undefined;
-      }
-    ) => THandlerReturn;
-    query: TQuery;
-    body: TBody;
-  });
+  constructor(
+    config: BaseEndpointOptions<TPath, TMethod, TParentEndpoint> & {
+      handler: (
+        options: RouteParams<TPath> & {
+          query: TQuery extends ZodTypeAny ? z.infer<TQuery> : undefined;
+          body: TBody extends ZodTypeAny ? z.infer<TBody> : undefined;
+        }
+      ) => THandlerReturn;
+      query: TQuery;
+      body: TBody;
+    }
+  );
 
   constructor(public config: any) {
     this.config = config;
