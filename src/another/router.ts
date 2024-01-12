@@ -114,6 +114,24 @@ export class EndpointGroup<TBasePrefix extends string = "/"> extends Endpoint<
   }
 }
 
+export class WebApplication<
+  TRouteTree extends AnyEndpoint = AnyEndpoint,
+  TApplicationContext extends object = {}
+> {
+  routeTree: TRouteTree;
+  applicationContext?: TApplicationContext;
+
+  constructor({
+    routeTree,
+    applicationContext,
+  }: {
+    routeTree: TRouteTree;
+    applicationContext?: TApplicationContext;
+  }) {
+    this.routeTree = routeTree;
+  }
+}
+
 const root = new EndpointGroup({ path: "/api" });
 
 const rootGet = new Endpoint({
@@ -128,6 +146,5 @@ const userDetails = new Endpoint({
   path: "/users",
   method: "get",
   getParentEndpoint: () => root,
-  handler: ({ query }) => {},
-  query: z.object({ asdf: z.string() }),
+  handler: () => {},
 });
